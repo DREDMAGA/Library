@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Edit Book</h2>
+<form method="post">
+  <div class="mb-3">
+    <label class="form-label">Title</label>
+    <input type="text" name="title" class="form-control" value="{{ book.Title }}" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Author</label>
+    <input type="text" name="author" class="form-control" value="{{ book.Author }}" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Year</label>
+    <input type="number" name="year" class="form-control" value="{{ book.Year }}" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Content (XML)</label>
+    <textarea name="content" class="form-control tinymce-editor">{{ book.Content }}</textarea>
+  </div>
+  <button type="submit" class="btn btn-success">Update</button>
+  <a href="{{ url_for('book_list') }}" class="btn btn-secondary">Back</a>
+</form>
+{% endblock %}

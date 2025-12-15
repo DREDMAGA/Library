@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ book.Title }}</h2>
+<p><strong>Author:</strong> {{ book.Author }}</p>
+<p><strong>Year:</strong> {{ book.Year }}</p>
+<div>
+    <strong>Content:</strong>
+    <div class="border p-3 bg-white">{{ book.Content | safe }}</div>
+</div>
+<a href="{{ url_for('book_list') }}" class="btn btn-secondary mt-3">Back</a>
+{% endblock %}

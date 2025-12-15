@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Books</h2>
+    <a href="{{ url_for('book_add') }}" class="btn btn-primary">Add Book</a>
+</div>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Title</th><th>Author</th><th>Year</th><th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for book in books %}
+        <tr>
+            <td>{{ book.Title }}</td>
+            <td>{{ book.Author }}</td>
+            <td>{{ book.Year }}</td>
+            <td>
+                <a href="{{ url_for('book_card', book_id=book.BookId) }}" class="btn btn-sm btn-info">View</a>
+                <a href="{{ url_for('book_edit', book_id=book.BookId) }}" class="btn btn-sm btn-warning">Edit</a>
+                <form action="{{ url_for('book_delete', book_id=book.BookId) }}" method="post" style="display:inline;">
+                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this book?')">Delete</button>
+                </form>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
