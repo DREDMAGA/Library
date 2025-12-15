@@ -1,0 +1,161 @@
+create table dbo.books (
+	book_id int identity(1,1) primary key,
+	title varchar(200),
+	author varchar(100),
+	year int check(year>0),
+	contents xml
+)
+;
+
+
+
+create or alter procedure insert_pr
+    @title varchar(200),
+    @author varchar(100),
+    @year int,
+    @contents xml,
+    @message as varchar(100) = '' OUT
+as
+begin
+
+	insert into books (title, author, year, contents)
+	values (
+		@title,
+		@author,
+		@year,
+		@contents
+		);
+	set @message = 'book insert'
+
+end
+
+
+
+CREATE OR ALTER PROCEDURE dbo.select_pr
+    @book_id INT,
+    @message VARCHAR(100) = '' OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @book_id = 0
+    BEGIN
+        SELECT
+            book_id,
+            title,
+            author,
+            year,
+            NULL AS ChapterNumber,
+            NULL AS ChapterTitle
+        FROM dbo.books
+        ORDER BY book_id DESC;
+        RETURN;
+    END
+
+    IF NOT EXISTS (SELECT 1 FROM dbo.books b WHERE b.book_id = @book_id)
+    BEGIN
+        SET @message = 'book not found';
+        RETURN;
+    END
+
+    DECLARE @chap TABLE (ChapterNumber INT, ChapterTitle VARCHAR(4000));
+
+    INSERT INTO @chap (ChapterNumber, ChapterTitle)
+    SELECT
+        C.value('@number','INT') AS ChapterNumber,
+        C.value('.','VARCHAR(4000)') AS ChapterTitle
+    FROM dbo.books b
+    CROSS APPLY b.contents.nodes('/contents/chapter') AS T(C)
+    WHERE b.book_id = @book_id;
+
+    IF EXISTS (SELECT 1 FROM @chap)
+    BEGIN
+        SELECT
+            b.book_id,
+            b.title,
+            b.author,
+            b.year,
+            c.ChapterNumber,
+            c.ChapterTitle
+        FROM dbo.books b
+        CROSS JOIN @chap c
+        WHERE b.book_id = @book_id;
+        RETURN;
+    END
+
+    SELECT
+        b.book_id,
+        b.title,
+        b.author,
+        b.year,
+        NULL AS ChapterNumber,
+        NULL AS ChapterTitle
+    FROM dbo.books b
+    WHERE b.book_id = @book_id;
+END
+
+
+
+create or alter procedure update_pr
+	@book_id int,
+	@title varchar(200),
+	@author varchar(100),
+	@year int,
+	@contents xml,
+	@message varchar(100) = '' OUTput
+as
+begin
+
+	if not Exists (
+		select
+			book_id
+		from
+			books
+		where
+			@book_id = book_id
+	)
+	begin
+		set @message = 'book not found'
+		return
+	end
+
+	update
+		books
+	set
+    		title = @title,
+    		author = @author,
+    		year = @year,
+    		contents = @contents
+	where
+		book_id = @book_id;
+
+	set @message = 'book updated'
+
+end
+
+create or alter procedure delete_pr
+	@book_id int,
+	@message varchar(100) = ''OUTput
+as
+begin
+
+	if not Exists (
+		select
+			book_id
+		from
+			books
+		where
+			@book_id = book_id
+	)
+	begin
+		set @message = 'book not found'
+		return
+	end
+
+	delete from books
+	where
+		book_id = @book_id;
+
+	set @message = 'book deleted'
+
+end
