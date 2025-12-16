@@ -24,14 +24,11 @@ def book_list():
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        # select_pr with @book_id=0 — return all books: modify stored proc if necessary.
         cursor.execute("EXEC dbo.select_pr @book_id=?", 0)
         rows = cursor.fetchall()
-        # Map rows to simple objects/dicts expected by templates.
         books = []
         seen = set()
         for r in rows:
-            # r columns: book_id, title, author, year, ChapterNumber, ChapterTitle
             book_id = getattr(r, 'book_id', None) or r[0]
             if book_id in seen:
                 continue
@@ -68,14 +65,12 @@ def book_card(book_id):
         if not rows:
             flash("Book not found.")
             return redirect(url_for('book_list'))
-        # First row has book metadata; contents is XML stored in table — select_pr returns chapter rows.
         r0 = rows[0]
         book = {
             'BookId': getattr(r0, 'book_id', r0[0]),
             'Title': getattr(r0, 'title', r0[1]),
             'Author': getattr(r0, 'author', r0[2]),
             'Year': getattr(r0, 'year', r0[3]),
-            # We'll reconstruct contents as simple HTML list of chapters
             'Content': ''
         }
         chapters = []
@@ -112,7 +107,6 @@ def book_add():
         try:
             conn = get_connection()
             cursor = conn.cursor()
-            # Stored proc expects @contents as xml — pass string; pyodbc will send as NVARCHAR, SQL will cast.
             cursor.execute("EXEC dbo.insert_pr @title=?, @author=?, @year=?, @contents=?",
                            title, author, year_int, content)
             conn.commit()
@@ -158,7 +152,6 @@ def book_edit(book_id):
                 if conn: conn.close()
             except:
                 pass
-    # GET: load existing book. We'll call select_pr and reconstruct a contents XML string if possible.
     conn = None
     cursor = None
     try:
@@ -170,8 +163,6 @@ def book_edit(book_id):
             flash("Book not found.")
             return redirect(url_for('book_list'))
         r0 = rows[0]
-        # For editing, we prefer the raw XML contents from the table. select_pr doesn't return raw XML.
-        # As workaround, query directly the table to get contents column.
         cursor.execute("SELECT contents FROM dbo.books WHERE book_id = ?", book_id)
         contents_row = cursor.fetchone()
         contents_xml = contents_row[0] if contents_row else ''
